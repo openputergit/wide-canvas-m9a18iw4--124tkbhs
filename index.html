@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Home Control</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .control-card {
+            backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.95);
+            transition: all 0.3s ease;
+        }
+        .control-card:hover {
+            transform: translateY(-5px);
+        }
+        .active {
+            background-color: #3B82F6 !important;
+            color: white !important;
+        }
+        .fan-btn, .bulb-btn {
+            transition: all 0.2s ease;
+        }
+        .fan-btn:hover, .bulb-btn:hover {
+            transform: scale(1.03);
+        }
+        .main-container {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .connection-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            z-index: 100;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .fan-animation {
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @media (max-width: 640px) {
+            .control-card {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="main-container min-h-screen py-8 px-4">
+        <div class="container mx-auto max-w-4xl">
+            <!-- Header -->
+            <header class="mb-8 text-center">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Smart Home Control</h1>
+                <p class="text-gray-600">Control your devices with ease</p>
+            </header>
+
+            <!-- Navigation -->
+            <nav class="flex justify-center mb-8 space-x-4">
+                <button onclick="showScreen('home')" class="nav-btn px-6 py-3 rounded-lg bg-white shadow-md hover:bg-blue-50 transition-all focus:outline-none focus:ring-2 focus:ring-blue-300">
+                    <i class="bi bi-house-door text-xl"></i>
+                    <span class="ml-2">Home</span>
+                </button>
+                <button onclick="showScreen('settings')" class="nav-btn px-6 py-3 rounded-lg bg-white shadow-md hover:bg-blue-50 transition-all focus:outline-none focus:ring-2 focus:ring-blue-300">
+                    <i class="bi bi-gear text-xl"></i>
+                    <span class="ml-2">Settings</span>
+                </button>
+            </nav>
+
+            <!-- Home Screen -->
+            <div id="home" class="screen">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Fan Control Card -->
+                    <div class="control-card p-6 rounded-xl shadow-lg">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-xl font-semibold">Fan Control</h2>
+                            <i id="fan-icon" class="bi bi-fan text-2xl text-gray-700"></i>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <button onclick="controlFan('1')" id="fan-25" class="fan-btn p-4 rounded-lg border border-gray-200 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                                    <i class="bi bi-1-circle mr-2"></i>25% Speed
+                                </button>
+                                <button onclick="controlFan('2')" id="fan-50" class="fan-btn p-4 rounded-lg border border-gray-200 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                                    <i class="bi bi-2-circle mr-2"></i>50% Speed
+                                </button>
+                                <button onclick="controlFan('3')" id="fan-75" class="fan-btn p-4 rounded-lg border border-gray-200 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                                    <i class="bi bi-3-circle mr-2"></i>75% Speed
+                                </button>
+                                <button onclick="controlFan('F')" id="fan-max" class="fan-btn p-4 rounded-lg border border-gray-200 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                                    <i class="bi bi-lightning-fill mr-2"></i>Max Speed
+                                </button>
+                            </div>
+                            <button onclick="controlFan('f')" id="fan-off" class="w-full p-4 rounded-lg border border-gray-200 bg-red-50 hover:bg-red-100 text-red-600 focus:outline-none focus:ring-2 focus:ring-red-300">
+                                <i class="bi bi-power mr-2"></i>Turn Off Fan
+                            </button>
+                            <div class="mt-4 bg-gray-100 p-3 rounded-lg">
+                                <p class="text-sm text-gray-700">Current Status: <span id="fan-status" class="font-medium">Off</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bulb Control Card -->
+                    <div class="control-card p-6 rounded-xl shadow-lg">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-xl font-semibold">Bulb Control</h2>
+                            <i id="bulb-icon" class="bi bi-lightbulb text-2xl text-gray-700"></i>
+                        </div>
+                        <div class="space-y-4">
+                            <button onclick="controlBulb('B')" id="bulb-on" class="bulb-btn w-full p-4 rounded-lg border border-gray-200 hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-300">
+                                <i class="bi bi-lightbulb-fill mr-2"></i>Turn On Bulb
+                            </button>
+                            <button onclick="controlBulb('b')" id="bulb-off" class="bulb-btn w-full p-4 rounded-lg border border-gray-200 bg-red-50 hover:bg-red-100 text-red-600 focus:outline-none focus:ring-2 focus:ring-red-300">
+                                <i class="bi bi-power mr-2"></i>Turn Off Bulb
+                            </button>
+                            <div class="mt-4 bg-gray-100 p-3 rounded-lg">
+                                <p class="text-sm text-gray-700">Current Status: <span id="bulb-status" class="font-medium">Off</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Screen -->
+            <div id="settings" class="screen hidden">
+                <div class="control-card p-6 rounded-xl shadow-lg bg-white mb-6">
+                    <h2 class="text-xl font-semibold mb-4">Bluetooth Connection</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-3 bg-gray-100 rounded-lg">
+                            <span>HC-05 Module</span>
+                            <button id="connect-btn" onclick="toggleConnection()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                                Connect
+                            </button>
+                        </div>
+                        <div class="bg-gray-100 p-3 rounded-lg">
+                            <p class="text-sm text-gray-700">Connection Status: <span id="connection-status-text" class="font-medium">Disconnected</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-card p-6 rounded-xl shadow-lg bg-white">
+                    <h2 class="text-xl font-semibold mb-4">About</h2>
+                    <p class="text-gray-700 mb-2">This app controls fan speed and bulb through HC-05 Bluetooth module.</p>
+                    <p class="text-gray-700 mb-2">Fan Speed Commands:</p>
+                    <ul class="list-disc ml-5 text-gray-700 mb-2">
+                        <li>1 - 25% Speed</li>
+                        <li>2 - 50% Speed</li>
+                        <li>3 - 75% Speed</li>
+                        <li>F - Maximum Speed</li>
+                        <li>f - Turn Off</li>
+                    </ul>
+                    <p class="text-gray-700 mb-2">Bulb Commands:</p>
+                    <ul class="list-disc ml-5 text-gray-700">
+                        <li>B - Turn On</li>
+                        <li>b - Turn Off</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="connection-status" class="connection-status bg-red-500 text-white">
+        <i class="bi bi-bluetooth"></i> Disconnected
+    </div>
+
+    <script>
+        // State management
+        const state = {
+            connected: false,
+            fan: {
+                status: 'Off',
+                speed: 0 // 0=off, 1=25%, 2=50%, 3=75%, 4=max
+            },
+            bulb: {
+                status: 'Off'
+            }
+        };
+
+        // Simulated Bluetooth communication
+        function sendCommand(command) {
+            if (!state.connected) {
+                showToast('Please connect to Bluetooth first', 'error');
+                return false;
+            }
+            
+            console.log('Sending command:', command);
+            // Here you would implement the actual HC-05 Bluetooth communication
+            return true;
+        }
+
+        function controlFan(speed) {
+            if (!sendCommand(speed)) return;
+            
+            // Update fan status based on command
+            const fanIcon = document.getElementById('fan-icon');
+            const fanStatus = document.getElementById('fan-status');
+            
+            // Remove active class from all fan buttons
+            document.querySelectorAll('.fan-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Update UI based on command
+            if (speed === 'f') {
+                state.fan.status = 'Off';
+                state.fan.speed = 0;
+                fanStatus.textContent = 'Off';
+                fanIcon.classList.remove('text-blue-500', 'fan-animation');
+                fanIcon.classList.add('text-gray-700');
+            } else {
+                // Add active class to clicked button
+                let speedText, speedValue;
+                
+                if (speed === '1') {
+                    speedText = '25%';
+                    speedValue = 1;
+                    document.getElementById('fan-25').classList.add('active');
+                } else if (speed === '2') {
+                    speedText = '50%';
+                    speedValue = 2;
+                    document.getElementById('fan-50').classList.add('active');
+                } else if (speed === '3') {
+                    speedText = '75%';
+                    speedValue = 3;
+                    document.getElementById('fan-75').classList.add('active');
+                } else if (speed === 'F') {
+                    speedText = 'Max';
+                    speedValue = 4;
+                    document.getElementById('fan-max').classList.add('active');
+                }
+                
+                state.fan.status = 'On';
+                state.fan.speed = speedValue;
+                fanStatus.textContent = `On - ${speedText}`;
+                fanIcon.classList.remove('text-gray-700');
+                fanIcon.classList.add('text-blue-500', 'fan-animation');
+            }
+            
+            showToast(`Fan set to ${state.fan.status === 'Off' ? 'Off' : fanStatus.textContent}`, 'success');
+        }
+
+        function controlBulb(command) {
+            if (!sendCommand(command)) return;
+            
+            // Update bulb status based on command
+            const bulbIcon = document.getElementById('bulb-icon');
+            const bulbStatus = document.getElementById('bulb-status');
+            
+            // Remove active class from all bulb buttons
+            document.querySelectorAll('.bulb-btn').forEach(btn => btn.classList.remove('active'));
+            
+            if (command === 'B') {
+                state.bulb.status = 'On';
+                bulbStatus.textContent = 'On';
+                bulbIcon.classList.remove('bi-lightbulb', 'text-gray-700');
+                bulbIcon.classList.add('bi-lightbulb-fill', 'text-yellow-400');
+                document.getElementById('bulb-on').classList.add('active');
+                showToast('Bulb turned on', 'success');
+            } else if (command === 'b') {
+                state.bulb.status = 'Off';
+                bulbStatus.textContent = 'Off';
+                bulbIcon.classList.remove('bi-lightbulb-fill', 'text-yellow-400');
+                bulbIcon.classList.add('bi-lightbulb', 'text-gray-700');
+                document.getElementById('bulb-off').classList.add('active');
+                showToast('Bulb turned off', 'success');
+            }
+        }
+
+        function toggleConnection() {
+            const connectBtn = document.getElementById('connect-btn');
+            const connectionStatus = document.getElementById('connection-status');
+            const connectionStatusText = document.getElementById('connection-status-text');
+            
+            state.connected = !state.connected;
+            
+            if (state.connected) {
+                connectBtn.textContent = 'Disconnect';
+                connectBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                connectBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                
+                connectionStatus.classList.remove('bg-red-500');
+                connectionStatus.classList.add('bg-green-500');
+                connectionStatus.innerHTML = '<i class="bi bi-bluetooth"></i> Connected';
+                
+                connectionStatusText.textContent = 'Connected';
+                showToast('Connected to HC-05 module', 'success');
+            } else {
+                connectBtn.textContent = 'Connect';
+                connectBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                connectBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                
+                connectionStatus.classList.remove('bg-green-500');
+                connectionStatus.classList.add('bg-red-500');
+                connectionStatus.innerHTML = '<i class="bi bi-bluetooth"></i> Disconnected';
+                
+                connectionStatusText.textContent = 'Disconnected';
+                showToast('Disconnected from HC-05 module', 'error');
+            }
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function showToast(message, type = 'info') {
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `fixed top-5 right-5 px-4 py-2 rounded-lg text-white ${
+                type === 'success' ? 'bg-green-500' :
+                type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+            } shadow-lg z-50 transition-opacity duration-300`;
+            toast.style.opacity = '0';
+            
+            // Add icon based on type
+            const icon = document.createElement('i');
+            icon.className = `bi ${
+                type === 'success' ? 'bi-check-circle' :
+                type === 'error' ? 'bi-exclamation-triangle' : 'bi-info-circle'
+            } mr-2`;
+            toast.appendChild(icon);
+            
+            // Add message
+            const text = document.createTextNode(message);
+            toast.appendChild(text);
+            
+            // Add to document
+            document.body.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.style.opacity = '1';
+            }, 10);
+            
+            // Remove after delay
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            showScreen('home');
+        });
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
